@@ -19,6 +19,10 @@ title: Changelog
 
     *Ryo.gift*
 
+* Add support for multiple templates.
+
+    *Rob Sterner*, *Joel Hawksley*
+
 ## 2.36.0
 
 * Add `slot_type` helper method.
