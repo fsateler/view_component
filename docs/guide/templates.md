@@ -127,3 +127,25 @@ class TestComponent < ViewComponent::Base
   end
 end
 ```
+
+You can define templates that take parameters, using the `template_arguments` method.
+
+```ruby
+class TestComponent < ViewComponent::Base
+  template_arguments :list, :multiple # call_list now takes a `multiple` keyword argument
+  def initialize(mode:)
+    @mode = mode
+  end
+
+  def call
+    case @mode
+    when :list
+      call_list multiple: false
+    when :multilist
+      call_list multiple: true
+    when :summary
+      call_summary
+    end
+  end
+end
+```

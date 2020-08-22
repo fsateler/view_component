@@ -393,6 +393,26 @@ module ViewComponent
         @__vc_compiler ||= Compiler.new(self)
       end
 
+      # Contains the arguments for additional templates
+      # @return [Hash{String => Array<Symbol>}]
+      # @private
+      def template_arguments_hash
+        @template_arguments_hash ||= {}
+      end
+
+      # Declares arguments that need to be passed to a template.
+      #
+      # If a sidecar template needs additional locals that need to be passed
+      # at call site, then this method should be used.
+      #
+      # The signature for the resulting method will use keyword arguments
+      #
+      # @param [Symbol, String] template The template that needs arguments
+      # @param [Array<Symbol>] *args The arguments for the template
+      def template_arguments(template, *args)
+        compiler.add_template_arguments(template, *args)
+      end
+
       # we'll eventually want to update this to support other types
       # @private
       def type

@@ -41,27 +41,16 @@ module ViewComponent
       end
 
       templates.each do |template|
+        method_name, method_args = method_name_and_args_for template
+
         # Remove existing compiled template methods,
         # as Ruby warns when redefining a method.
-        pieces = File.basename(template[:path]).split(".")
-
-        method_name =
-          # If the template matches the name of the component,
-          # set the method name with call_method_name
-          if pieces.first == component_class.name.demodulize.underscore
-            call_method_name(template[:variant])
-          # Otherwise, append the name of the template to
-          # call_method_name
-          else
-            "#{call_method_name(template[:variant])}_#{pieces.first.to_sym}"
-          end
-
         if component_class.instance_methods.include?(method_name.to_sym)
           component_class.send(:undef_method, method_name.to_sym)
         end
 
         component_class.class_eval <<-RUBY, template[:path], -1
-          def #{method_name}
+          def #{method_name}(#{method_args.join(", ")})
             @output_buffer = ActionView::OutputBuffer.new
             #{compiled_template(template[:path])}
           end
@@ -75,9 +64,26 @@ module ViewComponent
       CompileCache.register(component_class)
     end
 
+    def add_template_arguments(template, *args)
+      template = template.to_s
+      raise ArgumentError, "Arguments already defined for template #{template}" if template_arguments.key?(template)
+
+      template_exists = templates.any? { |t| t[:base_name].split(".").first == template }
+      raise ArgumentError, "Template does not exist: #{template}" unless template_exists
+
+      template_arguments[template] = args
+    end
+
     private
 
     attr_reader :component_class
+
+    # Contains the arguments for additional templates
+    # @return [Hash{String => Array<Symbol>}]
+    # @private
+    def template_arguments
+      @template_arguments ||= {}
+    end
 
     def define_render_template_for
       if component_class.instance_methods.include?(:render_template_for)
@@ -197,6 +203,18 @@ module ViewComponent
 
           view_component_ancestors.flat_map { |ancestor| ancestor.instance_methods(false).grep(/^call/) }.uniq
         end
+    end
+
+    def method_name_and_args_for(template)
+      pieces = template[:base_name].split(".")
+      if pieces.first == component_class.name.demodulize.underscore
+        [call_method_name(template[:variant]), []]
+      else
+        [
+          "#{call_method_name(template[:variant])}_#{pieces.first.to_sym}",
+          (template_arguments || {}).fetch(pieces.first, []).map { |arg| "#{arg}:" }
+        ]
+      end
     end
 
     def inline_calls_defined_on_self
