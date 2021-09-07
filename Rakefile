@@ -25,6 +25,10 @@ task :translatable_benchmark do
   ruby "./performance/translatable_benchmark.rb"
 end
 
+task :partials_benchmark do
+  ruby "./performance/partials_benchmark.rb"
+end
+
 namespace :coverage do
   task :report do
     require "simplecov"

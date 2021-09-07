@@ -9,7 +9,9 @@ require "benchmark/ips"
 ENV["RAILS_ENV"] = "production"
 require File.expand_path("../test/sandbox/config/environment.rb", __dir__)
 
-require_relative "components/name_component.rb"
+require_relative "components/table_with_slot_component.rb"
+require_relative "components/table_with_slot_row_component.rb"
+require_relative "components/table_with_partial_component.rb"
 
 class BenchmarksController < ActionController::Base
 end
@@ -17,12 +19,16 @@ end
 BenchmarksController.view_paths = [File.expand_path("./views", __dir__)]
 controller_view = BenchmarksController.new.view_context
 
+DataStruct = Struct.new(:id)
+
+rows = 10.times.map { |i| DataStruct.new(i) }
+
 Benchmark.ips do |x|
   x.time = 10
   x.warmup = 2
 
-  x.report("component:") { controller_view.render(NameComponent.new(name: "Fox Mulder")) }
-  x.report("partial:") { controller_view.render("partial", name: "Fox Mulder") }
+  x.report("slot:") { controller_view.render(TableWithSlotComponent.new(rows: rows)) { |c| c.column(attribute: :id) } }
+  x.report("partial:") { controller_view.render(TableWithPartialComponent.new(rows: rows)) { |c| c.column(attribute: :id) } }
 
   x.compare!
 end

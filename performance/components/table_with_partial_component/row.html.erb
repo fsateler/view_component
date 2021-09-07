@@ -1,0 +1,5 @@
+<%= content_tag :tr, row_options do %>
+    <% columns.each do |col| %>
+      <td><%= col.render_value(row) %></td>
+    <% end %>
+<% end %>
